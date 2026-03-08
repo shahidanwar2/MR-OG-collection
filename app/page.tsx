@@ -1,39 +1,49 @@
 "use client";
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react'; // useEffect add kiya
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
+import { supabase } from '@/lib/supabase'; // Supabase connect kiya
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-// --- Dynamic Product Data ---
-const productsData = {
-  mensTops: [
-    { id: 1, name: "OG Oversized Tee", price: "180°C", img: "https://i.pinimg.com/736x/cb/63/9a/cb639a6a329c3f685e0c7f123c8de2ba.jpg" },
-    { id: 2, name: "Premium Street Shirt", price: "₹1,299", img: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=500" },
-    { id: 3, name: "Vintage Linen Top", price: "₹1,149", img: "https://images.unsplash.com/photo-1589310243389-96a5483213a8?w=500" },
-  ],
-  mensBottoms: [
-    { id: 4, name: "Baggy Blue Denim", price: "₹1,499", img: "https://images.unsplash.com/photo-1542272604-787c3835535d?q=80&w=1000" },
-    { id: 5, name: "Jet Black Cargo", price: "₹1,699", img: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=500" },
-    { id: 6, name: "Slim Fit Indigo", price: "₹1,399", img: "https://images.unsplash.com/photo-1604176354204-926873ff34b0?w=500" },
-  ],
-  kidsTops: [
-    { id: 7, name: "Little OG Tee", price: "₹499", img: "https://xcdn.next.co.uk/Common/Items/Default/Default/ItemImages/3_4Ratio/Search/Lge/W66708.jpg?im=Resize,width=450" },
-    { id: 8, name: "Junior Graphic Shirt", price: "₹649", img: "https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?w=500" },
-  ],
-  kidsBottoms: [
-    { id: 9, name: "Mini Baggy Jeans", price: "₹899", img: "https://www.patpat.com/cdn/shop/files/688053ce59035.webp?v=1757926823&width=750" },
-    { id: 10, name: "Toddler Cargo", price: "₹799", img: "https://images.unsplash.com/photo-1503944583220-8150b7e3c3b1?w=500" },
-  ]
-};
-
 export default function Home() {
   const container = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  
+  // --- Dynamic State ---
+  // Ab data yahan direct database se aayega
+  const [productsData, setProductsData] = useState({
+    mensTops: [],
+    mensBottoms: [],
+    kidsTops: [],
+    kidsBottoms: []
+  });
+  
   const [activeGallery, setActiveGallery] = useState<keyof typeof productsData | null>(null);
+
+  // --- Supabase se data kheenchna ---
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const { data, error } = await supabase.from('products').select('*');
+      
+      if (data) {
+        // Data ko categories mein divide karna
+        const organized = {
+          mensTops: data.filter((p: any) => p.category === 'mensTops'),
+          mensBottoms: data.filter((p: any) => p.category === 'mensBottoms'),
+          kidsTops: data.filter((p: any) => p.category === 'kidsTops'),
+          kidsBottoms: data.filter((p: any) => p.category === 'kidsBottoms'),
+        };
+        setProductsData(organized);
+      }
+      if (error) console.error("Error fetching products:", error.message);
+    };
+
+    fetchProducts();
+  }, []);
 
   useGSAP(() => {
     gsap.to(".hero-title", { y: 0, duration: 1.5, ease: "power4.out" });
@@ -58,7 +68,6 @@ export default function Home() {
     });
   }, { scope: container });
 
-  // Location hit karne wala function
   const openLocation = () => {
     window.open("https://www.google.com/maps/search/?api=1&query=Pakadiya+road+Harsidhi+Bihar", "_blank");
   };
@@ -70,22 +79,32 @@ export default function Home() {
       {activeGallery && (
         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-6 md:p-20 overflow-y-auto">
           <button onClick={() => setActiveGallery(null)} className="fixed top-10 right-10 text-white text-5xl font-light hover:rotate-90 transition-all z-[110]">✕</button>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-7xl pt-20 pb-10">
-            {productsData[activeGallery].map((item) => (
-              <div key={item.id} className="group bg-zinc-900/50 p-5 rounded-2xl border border-white/5 hover:border-orange-500 transition-all">
-                <div className="h-[400px] overflow-hidden rounded-xl mb-6 shadow-2xl">
-                  <img src={item.img} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={item.name} />
-                </div>
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <h4 className="text-2xl font-black text-white uppercase italic leading-none mb-2">{item.name}</h4>
-                        <p className="text-orange-500 font-black text-2xl leading-none">{item.price}</p>
+          
+          {/* Agar products nahi hain toh message dikhayega */}
+          {productsData[activeGallery].length === 0 ? (
+            <div className="text-white text-center">
+                <h3 className="text-4xl font-black italic uppercase opacity-20">No Products Found</h3>
+                <p className="mt-4 text-orange-500 font-bold uppercase tracking-widest text-xs">Upload from Admin Dashboard</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-7xl pt-20 pb-10">
+                {productsData[activeGallery].map((item: any) => (
+                <div key={item.id} className="group bg-zinc-900/50 p-5 rounded-2xl border border-white/5 hover:border-orange-500 transition-all">
+                  
+                    <div className="h-[400px] overflow-hidden rounded-xl mb-6 shadow-2xl">
+                    <img src={item.image_url || item.img} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={item.name} />
                     </div>
-                    <button className="px-6 py-3 bg-white text-black font-black uppercase text-[10px] tracking-widest rounded-lg hover:bg-orange-500 hover:text-white transition-all">Order</button>
+                    <div className="flex justify-between items-center mb-6">
+                        <div>
+                            <h4 className="text-2xl font-black text-white uppercase italic leading-none mb-2">{item.name}</h4>
+                            <p className="text-orange-500 font-black text-2xl leading-none">{item.price}</p>
+                        </div>
+                        <button className="px-6 py-3 bg-white text-black font-black uppercase text-[10px] tracking-widest rounded-lg hover:bg-orange-500 hover:text-white transition-all">Order</button>
+                    </div>
                 </div>
-              </div>
-            ))}
-          </div>
+                ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -175,20 +194,16 @@ export default function Home() {
         </div>
       </section>
 
-      {/* --- Footer (Old Contact Style + Location Hit) --- */}
+      {/* Footer */}
       <footer id="contact" className="bg-black text-white p-10 md:p-20 min-h-screen flex flex-col justify-between">
         <div className="flex flex-col md:flex-row justify-between items-start gap-10">
-            {/* Purana bada text style */}
-            <h2 className="text-[12vw] font-black leading-none text-orange-500 uppercase tracking-tighter">OG  <br/> STORE.</h2>
-            
+            <h2 className="text-[12vw] font-black leading-none text-orange-500 uppercase tracking-tighter">OG   <br/> STORE.</h2>
             <div className="flex flex-col gap-10">
                 <div className="flex flex-col text-4xl md:text-6xl font-black italic uppercase">
                     <a href="#" className="hover:text-orange-500 transition-all">Instagram</a>
                     <a href="https://wa.me/91XXXXXXXXXX" className="text-green-500 hover:text-white transition-all">WhatsApp</a>
                     <a href="#" className="hover:text-orange-500 transition-all">Facebook</a>
                 </div>
-                
-                {/* Location Symbol & Address */}
                 <div className="flex items-center gap-4 group cursor-pointer" onClick={openLocation}>
                     <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-black"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -200,7 +215,6 @@ export default function Home() {
                 </div>
             </div>
         </div>
-
         <div className="border-t border-white/10 pt-10 flex flex-col md:flex-row justify-between items-end gap-4">
             <p className="text-[10px] font-bold uppercase text-zinc-400">© 2026 MR OG COLLECTIONS</p>
             <div className="text-right">
