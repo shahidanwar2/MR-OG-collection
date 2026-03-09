@@ -10,7 +10,7 @@ export default function AdminDashboard() {
   
   // --- CONFIGURATION ---
   const ADMIN_ACCESS_KEY = "admin123"; 
-  const REGISTERED_MOBILE = ""; // REPLACE WITH YOUR 10-DIGIT MOBILE NUMBER
+  const REGISTERED_MOBILE = "+91XXXXXXXXXX"; // REPLACE WITH YOUR 10-DIGIT MOBILE NUMBER
 
   // Form States
   const [name, setName] = useState("");
@@ -27,6 +27,7 @@ export default function AdminDashboard() {
     
     if (data) {
       setAllProducts([...data].reverse());
+      console.log("Inventory Loaded:", data); // Check if 'id' exists in objects
     }
     if (error) console.error("Error fetching inventory:", error.message);
   };
@@ -75,10 +76,25 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
-  const handleDelete = async (id: number) => {
+  // --- FIXED DELETE FUNCTION ---
+  const handleDelete = async (id: any) => {
+    console.log("Attempting to delete ID:", id); // Debugging line
+
+    if (!id) {
+      alert("Error: Product ID is undefined. Please refresh and try again.");
+      return;
+    }
+
     if (confirm("Are you sure you want to remove this item?")) {
-      const { error } = await supabase.from('products').delete().eq('id', id);
-      if (!error) {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id); // Ensure your column name is exactly 'id' in Supabase
+
+      if (error) {
+        console.error("Delete failed:", error.message);
+        alert("Delete failed: " + error.message);
+      } else {
         alert("Item removed successfully!");
         fetchInventory(); 
       }
@@ -89,7 +105,7 @@ export default function AdminDashboard() {
     return (
       <div className="h-screen flex items-center justify-center bg-black text-white p-6">
         <div className="w-full max-w-md p-10 border border-white/10 rounded-3xl bg-zinc-900/50 backdrop-blur-xl shadow-2xl">
-          <h2 className="text-4xl font-black italic uppercase text-orange-500 mb-2 text-center">MR OG</h2>
+          <h2 className="text-4xl font-black italic uppercase text-orange-500 mb-2 text-center underline">MR OG</h2>
           <p className="text-center text-[10px] tracking-[4px] uppercase opacity-50 mb-8">Admin Control</p>
           
           {!showRecovery ? (
@@ -206,15 +222,19 @@ export default function AdminDashboard() {
                 <p className="text-center py-10 opacity-30 italic">No products found...</p>
             ) : (
                 allProducts.map((item) => (
+                    // --- KEY ADDED HERE ---
                     <div key={item.id} className="flex items-center justify-between p-4 bg-black/50 rounded-xl border border-white/5 group hover:border-orange-500/30 transition-all">
                       <div className="flex items-center gap-4">
                         <img src={item.image_url} className="w-14 h-14 object-cover rounded-lg" alt="" />
                         <div>
                           <p className="font-bold uppercase text-xs tracking-wider">{item.name}</p>
-                          <p className="text-[10px] text-orange-500 font-black uppercase">{item.category} • {item.price}</p>
+                          <p className="text-[10px] text-orange-500 font-black uppercase italic">{item.category} • {item.price}</p>
                         </div>
                       </div>
-                      <button onClick={() => handleDelete(item.id)} className="px-5 py-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white text-[10px] font-black uppercase rounded-lg transition-all">
+                      <button 
+                        onClick={() => handleDelete(item.id)} // PASSING ID PROPERLY
+                        className="px-5 py-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white text-[10px] font-black uppercase rounded-lg transition-all"
+                      >
                         Remove
                       </button>
                     </div>
