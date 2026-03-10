@@ -9,20 +9,29 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
+// --- Interface for TypeScript ---
+// Isse build error (type 'never') hamesha ke liye khatam ho jayegi
+interface ProductData {
+  mensTops: any[];
+  mensBottoms: any[];
+  kidsTops: any[];
+  kidsBottoms: any[];
+}
+
 export default function Home() {
   const container = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   
   // --- Dynamic State ---
-  // <any> add kiya hai taaki build error na aaye
-  const [productsData, setProductsData] = useState<any>({
+  // Interface use kiya hai taki TypeScript ko data type pata rahe
+  const [productsData, setProductsData] = useState<ProductData>({
     mensTops: [],
     mensBottoms: [],
     kidsTops: [],
     kidsBottoms: []
   });
   
-  const [activeGallery, setActiveGallery] = useState<keyof typeof productsData | null>(null);
+  const [activeGallery, setActiveGallery] = useState<keyof ProductData | null>(null);
 
   // --- Supabase se data kheenchna ---
   useEffect(() => {
@@ -31,7 +40,7 @@ export default function Home() {
       
       if (data) {
         // Data ko categories mein divide karna
-        const organized = {
+        const organized: ProductData = {
           mensTops: data.filter((p: any) => p.category === 'mensTops'),
           mensBottoms: data.filter((p: any) => p.category === 'mensBottoms'),
           kidsTops: data.filter((p: any) => p.category === 'kidsTops'),
