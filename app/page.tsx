@@ -14,8 +14,8 @@ export default function Home() {
   const scrollRef = useRef<HTMLDivElement>(null);
   
   // --- Dynamic State ---
-  // Ab data yahan direct database se aayega
-  const [productsData, setProductsData] = useState({
+  // <any> add kiya hai taaki build error na aaye
+  const [productsData, setProductsData] = useState<any>({
     mensTops: [],
     mensBottoms: [],
     kidsTops: [],
