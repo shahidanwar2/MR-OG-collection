@@ -209,8 +209,8 @@ export default function Home() {
             <h2 className="text-[12vw] font-black leading-none text-orange-500 uppercase tracking-tighter">OG   <br/> STORE.</h2>
             <div className="flex flex-col gap-10">
                 <div className="flex flex-col text-4xl md:text-6xl font-black italic uppercase">
-                    <a href="#" className="hover:text-orange-500 transition-all">Instagram</a>
-                    <a href="https://wa.me/91XXXXXXXXXX" className="text-green-500 hover:text-white transition-all">WhatsApp</a>
+                    <a href="https://www.instagram.com/mr.og.collection.12/" className="hover:text-orange-500 transition-all">Instagram</a>
+                    <a href="https://wa.me/9546593100" className="text-green-500 hover:text-white transition-all">WhatsApp</a>
                     <a href="#" className="hover:text-orange-500 transition-all">Facebook</a>
                 </div>
                 <div className="flex items-center gap-4 group cursor-pointer" onClick={openLocation}>
